@@ -4,10 +4,10 @@ import type { Partition } from "../core/types";
 import { buildSavChunks, readSavContent } from "../core/sav";
 import { parseIndex, serializeIndex } from "../core/index-file";
 import { serializePartition } from "../core/serializer";
-import { withSong, withoutSong } from "./index-ops";
+import { INDEX_NAME, isReservedName, withSong, withoutSong } from "./index-ops";
 import type { SaveGamesApi } from "./types";
 
-const INDEX = "PartitionIndex";
+const INDEX = INDEX_NAME;
 const HEADER_LEN = 1235;
 
 /** Default Mordhau SaveGames folder: %LOCALAPPDATA%\Mordhau\Saved\SaveGames */
@@ -54,6 +54,11 @@ async function writeContent(dir: string, base: string, content: string): Promise
   }
 }
 
+/** A song named after the index would overwrite the menu index's own .sav files. */
+function assertSongName(name: string): void {
+  if (isReservedName(name)) throw new Error(`"${name}" is reserved for the song index; pick another name.`);
+}
+
 async function backupIndex(dir: string): Promise<void> {
   for (let i = 0; await exists(savPath(dir, INDEX, i)); i++) {
     await copyFile(savPath(dir, INDEX, i), savPath(dir, INDEX, i) + ".bak");
@@ -69,6 +74,7 @@ export async function listSongs(dir: string): Promise<string[]> {
 
 /** Write a song's .sav chunks and merge it into the menu index (non-destructive; backs up index). */
 export async function addSong(dir: string, name: string, p: Partition): Promise<void> {
+  assertSongName(name);
   await backupIndex(dir);
   await writeContent(dir, name, serializePartition({ ...p, name }));
   const names = withSong(await listSongs(dir), name);
@@ -77,6 +83,7 @@ export async function addSong(dir: string, name: string, p: Partition): Promise<
 
 /** Delete a song's .sav chunks and drop it from the menu index (backs up index). */
 export async function removeSong(dir: string, name: string): Promise<void> {
+  assertSongName(name);
   await backupIndex(dir);
   await clearChunks(dir, name);
   const names = withoutSong(await listSongs(dir), name);
@@ -85,6 +92,8 @@ export async function removeSong(dir: string, name: string): Promise<void> {
 
 /** Rename a song: move its .sav chunks, fix the partition's internal name, update the index. */
 export async function renameSong(dir: string, oldName: string, newName: string): Promise<void> {
+  assertSongName(oldName);
+  assertSongName(newName);
   if (oldName === newName) return;
   await backupIndex(dir);
   const header = await loadHeader();

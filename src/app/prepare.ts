@@ -26,6 +26,6 @@ export function prepareSong(
   nameOverride?: string,
   settings: Pick<ConvertOptions, "fold" | "maxPerChord" | "maxGapSec"> = {},
 ): PreparedSong {
-  const name = nameOverride ?? sanitizeName(filename);
+  const name = sanitizeName(nameOverride ?? filename);
   return { name, partition: convert(midi, assignment, name, { offsets, ...settings }) };
 }

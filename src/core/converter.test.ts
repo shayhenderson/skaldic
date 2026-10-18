@@ -1,6 +1,8 @@
 import { test, expect } from "vitest";
 import { convert } from "./converter";
-import type { ParsedMidi } from "./midi";
+import { parseMidi, type ParsedMidi } from "./midi";
+import { serializePartition } from "./serializer";
+import { readFileSync } from "node:fs";
 
 const raw: ParsedMidi = {
   ppq: 480,
@@ -126,4 +128,34 @@ test("clamps instead of octave-folding when fold is off", () => {
   const clamped = convert(m, { 0: 0 }, "C", { fold: false }).tracks[0].notes[0].tone;
   expect(clamped).toBe(83 - 24);
   expect(folded).not.toBe(clamped);
+});
+
+test("skips notes whose start or duration is not a finite number", () => {
+  const midi: ParsedMidi = {
+    ppq: 480,
+    tempos: [{ ticks: 0, bpm: 120 }],
+    tracks: [
+      {
+        index: 0, name: "a", channel: 0, isPercussion: false, pitchRange: [60, 64],
+        notes: [
+          { ticks: 0, midi: 60, durationTicks: 240, durationSec: 0.5, timeSec: 0 },
+          { ticks: 240, midi: 62, durationTicks: 240, durationSec: 0.5, timeSec: NaN },
+          { ticks: 480, midi: 64, durationTicks: 240, durationSec: NaN, timeSec: 0.5 },
+          { ticks: 720, midi: 65, durationTicks: 240, durationSec: 0.5, timeSec: Infinity },
+        ],
+      },
+    ],
+  };
+  const p = convert(midi, { 0: 0 }, "s");
+  expect(p.tracks[0].notes.length).toBe(1);
+  expect(serializePartition(p)).not.toMatch(/NaN|Infinity/);
+});
+
+test("a real MIDI file converts with no NaN in the serialized partition", () => {
+  const bytes = new Uint8Array(readFileSync(new URL("./__fixtures__/two-note.mid", import.meta.url)));
+  const midi = parseMidi(bytes);
+  const idx = midi.tracks.find((t) => t.notes.length)!.index;
+  const out = serializePartition(convert(midi, { [idx]: 0 }, "s"));
+  expect(out).not.toMatch(/NaN|Infinity/);
+  expect(out.startsWith("|s;")).toBe(true);
 });
