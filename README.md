@@ -52,6 +52,23 @@ See the [code signing policy](docs/CODE_SIGNING_POLICY.md) for how releases are 
 
 From v0.2.0 on, Skaldic checks for new versions when it starts and offers to update in place — your songs and saved projects are kept. Updates are cryptographically signed and verified before they install. (v0.1.0 predates this: update from it by downloading the new installer once and running it over your install.)
 
+### Verifying a download
+
+From v0.2.0 on, each release ships a `Skaldic_<ver>_x64-setup.exe.sig` next to the installer: a [minisign](https://jedisct1.github.io/minisign/) signature made with the same key the auto-updater checks. The public key is in [`src-tauri/tauri.conf.json`](src-tauri/tauri.conf.json) under `plugins.updater.pubkey`, stored base64-encoded; decoded, it is:
+
+```
+RWTX61U5FjKD/vSrG6J3z7iMQ66yNqN7ralmPSn8v4bQqnkrGTr0L76P
+```
+
+The `.sig` file is base64-encoded too, so decode it first, then verify. In PowerShell, in the folder you downloaded both files to:
+
+```powershell
+[IO.File]::WriteAllBytes("$PWD\Skaldic_<ver>_x64-setup.exe.minisig", [Convert]::FromBase64String((Get-Content -Raw Skaldic_<ver>_x64-setup.exe.sig)))
+minisign -Vm Skaldic_<ver>_x64-setup.exe -x Skaldic_<ver>_x64-setup.exe.minisig -P RWTX61U5FjKD/vSrG6J3z7iMQ66yNqN7ralmPSn8v4bQqnkrGTr0L76P
+```
+
+`Signature and comment signature verified` means the installer is the one the project published. The release page also lists each file's SHA-256 next to it; compare with `Get-FileHash Skaldic_<ver>_x64-setup.exe`.
+
 ## Using it
 
 1. **Choose** a `.mid` file — or drag one onto the panel.

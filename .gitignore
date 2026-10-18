@@ -26,3 +26,11 @@ dist-ssr
 # Tauri / Rust build output
 src-tauri/target/
 src-tauri/gen/schemas/
+
+# Secrets and signing keys
+*.key
+*.pem
+*.p12
+*.pfx
+.env
+.env.*

@@ -4,7 +4,7 @@
 
 ## Build and signing process
 
-Releases are built by the project's public CI pipeline ([release workflow](../.github/workflows/release.yml)) from the source in this repository, on a `v*` tag push. Only binaries produced by that pipeline are published, and each release is manually tested and approved by the maintainer before it goes live. Skaldic contains no proprietary components; see [NOTICE.md](../NOTICE.md) for third-party acknowledgments and licenses.
+Releases are built by the project's public CI pipeline ([release workflow](../.github/workflows/release.yml)) from the source in this repository, on a `v*` tag push. Since v0.2.1, only binaries produced by that pipeline are published (v0.1.0 and v0.2.0 were built locally by the maintainer), and each release is manually tested and approved by the maintainer before it goes live. Skaldic contains no proprietary components; see [NOTICE.md](../NOTICE.md) for third-party acknowledgments and licenses.
 
 ## Team and roles
 
