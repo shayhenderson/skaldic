@@ -23,6 +23,17 @@ export function sanitizeName(s: string): string {
     .trim();
 }
 
+/** Base name of the menu index's .sav files (`PartitionIndex[0].sav`, ...). */
+export const INDEX_NAME = "PartitionIndex";
+
+/**
+ * Whether a song name collides with the menu index's own files. Windows paths are
+ * case-insensitive, so a song named "partitionindex" would overwrite the index too.
+ */
+export function isReservedName(name: string): boolean {
+  return name.toLowerCase() === INDEX_NAME.toLowerCase();
+}
+
 /** Add a song name to the menu list without duplicating. */
 export function withSong(names: string[], name: string): string[] {
   return names.includes(name) ? names : [...names, name];

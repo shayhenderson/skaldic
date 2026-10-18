@@ -21,3 +21,11 @@ test("prepareSong: filename → sanitized name + converted partition", () => {
   // fitted lute tones (60-24, 62-24) among the type-1 notes
   expect(partition.tracks[0].notes.filter((n) => n.type === 1).map((n) => n.tone)).toEqual([36, 38]);
 });
+
+test("prepareSong sanitises a name override too", () => {
+  const midi = parseMidi(bytes);
+  const idx = melodicTracks(midi)[0].index;
+  const { name, partition } = prepareSong(midi, { [idx]: 0 }, "x.mid", {}, "a|b;c@d");
+  expect(name).toBe("abcd");
+  expect(partition.name).toBe("abcd");
+});
