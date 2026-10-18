@@ -12,3 +12,19 @@ test("parses tracks and notes from a MIDI", () => {
   expect(t.notes[0].ticks).toBe(0);
   expect(t.notes[1].ticks).toBe(480);
 });
+
+// The header's time-division field is bytes 12-13 of the file.
+const withDivision = (hi: number, lo: number) => {
+  const bytes = new Uint8Array(readFileSync(new URL("./__fixtures__/two-note.mid", import.meta.url)));
+  bytes[12] = hi;
+  bytes[13] = lo;
+  return bytes;
+};
+
+test("rejects a MIDI whose time division is 0 (note times would be NaN)", () => {
+  expect(() => parseMidi(withDivision(0x00, 0x00))).toThrow(Error);
+});
+
+test("rejects a MIDI with SMPTE time division (note times would be NaN)", () => {
+  expect(() => parseMidi(withDivision(0xe7, 0x28))).toThrow(Error);
+});

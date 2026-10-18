@@ -31,7 +31,7 @@ export function convert(
     ? Math.round(60_000_000 / midi.tempos[0].bpm / midi.ppq)
     : 1000;
   const tempo = Number.isFinite(rawTempo) && rawTempo > 0 ? rawTempo : 1000;
-  const assigned = removeDrums(midi.tracks).filter(
+  const assignedTracks = removeDrums(midi.tracks).filter(
     (rt) => assignment[rt.index] === 0 || assignment[rt.index] === 1,
   );
 
@@ -42,6 +42,13 @@ export function convert(
   // test fixtures without timeSec fall back to raw ticks.)
   const ptick = (n: RawNote) =>
     n.timeSec !== undefined ? Math.round((n.timeSec * 1_000_000) / tempo) : n.ticks;
+
+  // Drop any note whose position or length isn't a finite number. A NaN or Infinity
+  // here would be written verbatim into the partition (e.g. `#0;NaN-36-1-NaN`), which
+  // LuteMod can't play; parseMidi rejects the known cause (a bad time division), and
+  // this keeps any other malformed input from reaching the output.
+  const playable = (n: RawNote) => Number.isFinite(ptick(n)) && Number.isFinite(n.durationSec);
+  const assigned = assignedTracks.map((rt) => ({ ...rt, notes: rt.notes.filter(playable) }));
 
   // Normalize so the earliest note sits at tick 0 — Mordhau needs a note near tick 0 to
   // start playing; a track that begins seconds in would play late, or not at all.

@@ -27,6 +27,9 @@ const titleCase = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
 
 export function parseMidi(bytes: Uint8Array): ParsedMidi {
   const midi = new Midi(bytes);
+  // A time division of 0, or an SMPTE (frames-per-second) division, leaves @tonejs/midi
+  // with no usable ticks-per-beat, so every note time comes out NaN or Infinity.
+  if (!(midi.header.ppq > 0)) throw new Error("Unsupported MIDI time division (ticks per beat must be positive).");
   const tracks: RawTrack[] = midi.tracks.map((t, index) => {
     const notes: RawNote[] = t.notes.map((n) => ({
       ticks: n.ticks,
