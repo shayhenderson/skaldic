@@ -23,12 +23,14 @@
     "security": {
       "csp": {
         "default-src": "'self'",
-        "connect-src": "ipc: http://ipc.localhost",
+        "connect-src": "ipc: http://ipc.localhost blob:",
+        "script-src": "'self' blob:",
         "worker-src": "blob:"
       },
       "devCsp": {
         "default-src": "'self'",
-        "connect-src": "ipc: http://ipc.localhost ws://localhost:5173",
+        "connect-src": "ipc: http://ipc.localhost ws://localhost:5173 blob:",
+        "script-src": "'self' blob:",
         "style-src": "'self' 'unsafe-inline'",
         "worker-src": "blob:"
       }
