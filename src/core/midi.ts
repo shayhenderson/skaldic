@@ -23,6 +23,22 @@ export interface ParsedMidi {
   tracks: RawTrack[];
 }
 
+/**
+ * Lowest and highest pitch among the notes, or null if there are none. A loop rather
+ * than Math.min(...spread): spreading a very large array as call arguments overflows
+ * the stack (a dense MIDI can have well over 100k notes in one track).
+ */
+export function pitchRange(notes: readonly { midi: number }[]): [number, number] | null {
+  if (!notes.length) return null;
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (const n of notes) {
+    if (n.midi < lo) lo = n.midi;
+    if (n.midi > hi) hi = n.midi;
+  }
+  return [lo, hi];
+}
+
 const titleCase = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
 
 export function parseMidi(bytes: Uint8Array): ParsedMidi {
@@ -38,13 +54,12 @@ export function parseMidi(bytes: Uint8Array): ParsedMidi {
       durationSec: n.duration,
       timeSec: n.time,
     }));
-    const midis = notes.map((n) => n.midi);
     return {
       index,
       name: t.name?.trim() || titleCase(t.instrument?.name ?? "") || `Track ${index + 1}`,
       channel: t.channel,
       isPercussion: t.instrument?.percussion ?? t.channel === 9,
-      pitchRange: midis.length ? [Math.min(...midis), Math.max(...midis)] : null,
+      pitchRange: pitchRange(notes),
       notes,
     };
   });

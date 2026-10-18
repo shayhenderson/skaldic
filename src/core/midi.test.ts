@@ -1,6 +1,6 @@
 import { test, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { parseMidi } from "./midi";
+import { parseMidi, pitchRange } from "./midi";
 
 test("parses tracks and notes from a MIDI", () => {
   const bytes = new Uint8Array(readFileSync(new URL("./__fixtures__/two-note.mid", import.meta.url)));
@@ -27,4 +27,10 @@ test("rejects a MIDI whose time division is 0 (note times would be NaN)", () => 
 
 test("rejects a MIDI with SMPTE time division (note times would be NaN)", () => {
   expect(() => parseMidi(withDivision(0xe7, 0x28))).toThrow(Error);
+});
+
+test("pitchRange handles very large note counts without overflowing the stack", () => {
+  const notes = Array.from({ length: 200_000 }, (_, i) => ({ midi: 30 + (i % 50) }));
+  expect(pitchRange(notes)).toEqual([30, 79]);
+  expect(pitchRange([])).toBeNull();
 });
